@@ -897,38 +897,37 @@ function showToast(msg){
   clearTimeout(toastTimer);
   toastTimer = setTimeout(function(){ el.classList.remove('show'); }, 3200);
 }
-
-/* =========================================================
+/* ===================================================
    INIT
-========================================================= */
-  </script>
-initDataSync();
+=================================================== */
+  initDataSync();
 
-document.getElementById('nameInput').addEventListener('input', function(){ validateField('fieldName', true); });
-document.getElementById('phoneInput').addEventListener('input', function(){ validateField('fieldPhone', true); });
-document.getElementById('referenceInput').addEventListener('input', function(){ validateField('fieldReference', true); });
+  document.getElementById('nameInput').addEventListener('input', function(){ validateField('fieldName', true); });
+  document.getElementById('phoneInput').addEventListener('input', function(){ validateField('fieldPhone', true); });
+  document.getElementById('referenceInput').addEventListener('input', function(){ validateField('fieldReference', true); });
 
-renderServicePreview();
-renderServiceGrid();
-renderBarberGrid();
-renderDateScroll();
-renderSlotGrid();
-renderPaymentGrid();
-goToStep(1);
-  
-  <!-- SDKs de Firebase (compatibles para navegador) -->
+  renderServicePreview();
+  renderServiceGrid();
+  renderBarberGrid();
+  renderDateScroll();
+  renderSlotGrid();
+  renderPaymentGrid();
+  goToStep(1);
+</script>
+
+<!-- SDKs de Firebase (compatibles para navegador) -->
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
 <script>
   // Configuración de tu proyecto Firebase
   const firebaseConfig = {
-    apiKey: AIzaSyA3ysmCGt2BtVExibFg
+    apiKey: "AIzaSyA3ysmCGt2BtVExibFg",
     authDomain: "barber-b9c91.firebaseapp.com",
     projectId: "barber-b9c91",
     storageBucket: "barber-b9c91.firebasestorage.app",
     messagingSenderId: "744257756242",
-    appId: 1:744257756242:web:e08a45
+    appId: "1:744257756242:web:e08a45",
     measurementId: "G-G6CX1KK0CG"
   };
 
@@ -936,6 +935,6 @@ goToStep(1);
   firebase.initializeApp(firebaseConfig);
   const db = firebase.firestore();
 </script>
-  
+
 </body>
 </html>
