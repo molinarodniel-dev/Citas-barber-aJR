@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Barbería JR — Reserva de turnos</title>
+<style>
+  :root{
+    --ink:        #17201c;
+    --ink-soft:   #2a3630;
+    --paper:      #f6f4ef;
+    --paper-dim:  #ece8de;
+    --green:      #38523f;
+    --green-deep: #263b2c;
+    --gold:       #a9843d;
+    --line:       rgba(23,32,28,0.14);
+    --line-soft:  rgba(23,32,28,0.08);
+    --danger:     #a13327;
+    --radius-sm:  4px;
+    --radius-md:  10px;
+    --font-display: Georgia, 'Times New Roman', serif;
+    --font-body:    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+  *,*::before,*::after{ box-sizing:border-box; }
+  html{ scroll-behavior:smooth; }
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:var(--font-body);
+    -webkit-font-smoothing:antialiased;
+    line-height:1.5;
+  }
+  ::selection{ background:var(--green); color:var(--paper); }
+  a{ color:inherit; }
+  button{ font-family:inherit; }
+
+  .site-header{
+    position:sticky; top:0; z-index:40;
+    display:flex; align-items:center; justify-content:space-between;
+    gap:0.6rem; padding:1rem 5vw; background:var(--paper);
+    border-bottom:1px solid var(--line);
+  }
+  .brand-mark{
+    display:flex; align-items:center; gap:0.7rem;
+    font-family:var(--font-display); font-weight:700; font-size:1.15rem;
+  }
+  .brand-mark .mark{
+    flex:0 0 auto; width:32px; height:32px; border-radius:50%;
+    background:var(--green); color:var(--paper);
+    display:flex; align-items:center; justify-content:center;
+    font-size:0.85rem; font-weight:700;
+  }
+  .header-cta{
+    font-size:0.82rem; font-weight:600; padding:0.6rem 1rem;
+    background:var(--ink); color:var(--paper); border:none; border-radius:var(--radius-sm);
+    cursor:pointer; white-space:nowrap;
+  }
+
+  main{ max-width:1180px; margin:0 auto; padding:0 5vw; }
+
+  section{ padding:3.2rem 0; border-bottom:1px solid var(--line-soft); }
+  section:last-of-type{ border-bottom:none; }
+
+  .eyebrow{
+    font-size:0.74rem; letter-spacing:0.14em; text-transform:uppercase;
+    color:var(--gold); font-weight:700; margin:0 0 0.8rem;
+  }
+  h2.section-title{
+    font-family:var(--font-display); font-weight:700;
+    font-size:clamp(1.5rem,5vw,2.2rem); margin:0 0 0.5rem;
+  }
+  p.section-sub{ color:var(--ink-soft); max-width:52ch; margin:0; font-size:0.95rem; }
+
+  .hero h1{
+    font-family:var(--font-display); font-weight:700;
+    font-size:clamp(1.9rem,7vw,3rem); line-height:1.1; margin:0 0 1rem;
+  }
+  .hero p{ color:var(--ink-soft); max-width:46ch; font-size:1rem; margin-bottom:1.6rem; }
+  .hero-stats{ display:flex; gap:1.8rem; flex-wrap:wrap; }
+  .stat b{ font-family:var(--font-display); font-size:1.4rem; display:block; }
+  .stat span{ font-size:0.78rem; color:var(--ink-soft); }
+
+  .btn{
+    font-weight:600; font-size:0.9rem; padding:0.8rem 1.3rem;
+    border-radius:var(--radius-sm); border:1px solid transparent; cursor:pointer;
+  }
+  .btn-primary{ background:var(--green); color:var(--paper); }
+  .btn-primary:disabled{ opacity:0.4; cursor:not-allowed; }
+  .btn-outline{ background:transparent; border-color:var(--line); color:var(--ink); }
+
+  .wizard-steps{
+    display:grid; grid-template-columns:repeat(5, 1fr); gap:0;
+    list-style:none; margin:0 0 2rem; padding:0;
+    border:1px solid var(--line); border-radius:var(--radius-md); overflow:hidden;
+  }
+  .wizard-steps li{
+    padding:0.7rem 0.3rem; font-size:0.68rem; font-weight:700;
+    color:var(--ink-soft); background:var(--paper-dim); text-align:center;
+    border-right:1px solid var(--line);
+    display:flex; flex-direction:column; align-items:center; gap:0.35rem;
+  }
+  .wizard-steps li:last-child{ border-right:none; }
+  .wizard-steps li .step-num{
+    display:inline-flex; width:20px; height:20px; border-radius:50%;
+    background:var(--line); color:var(--ink); align-items:center; justify-content:center;
+    font-size:0.7rem;
+  }
+  .wizard-steps li.done{ background:var(--paper); color:var(--green); }
+  .wizard-steps li.done .step-num{ background:var(--green); color:var(--paper); }
+  .wizard-steps li.current{ background:var(--ink); color:var(--paper); }
+  .wizard-steps li.current .step-num{ background:var(--gold); color:var(--ink); }
+
+  .wizard-panel{ display:none; }
+  .wizard-panel.active{ display:block; }
+
+  .option-grid{
+    display:grid; grid-template-columns:1fr; gap:0.8rem;
+  }
+  @media (min-width:600px){ .option-grid{ grid-template-columns:repeat(2, 1fr); } }
+  .option-card{
+    text-align:left; border:1px solid var(--line); border-radius:var(--radius-md);
+    background:var(--paper); padding:1.1rem 1.2rem; cursor:pointer; width:100%;
+  }
+  .option-card[aria-pressed="true"]{ border-color:var(--green); background:rgba(56,82,63,0.08); box-shadow:inset 0 0 0 1px var(--green); }
+  .option-card h4{ font-family:var(--font-display); font-weight:700; font-size:1.05rem; margin:0 0 0.25rem; }
+  .option-card .meta{ font-size:0.78rem; color:var(--ink-soft); }
+  .option-card .price{ font-family:var(--font-display); color:var(--gold); font-size:0.98rem; margin-top:0.6rem; font-weight:700; }
+
+  .barber-grid{ display:grid; grid-template-columns:1fr; gap:0.8rem; }
+  .barber-card{
+    display:flex; align-items:center; gap:0.8rem; text-align:left;
+    border:1px solid var(--line); border-radius:var(--radius-md); padding:1rem;
+    background:var(--paper); cursor:pointer; width:100%;
+  }
+  .barber-card[aria-pressed="true"]{ border-color:var(--green); box-shadow:inset 0 0 0 1px var(--green); background:rgba(56,82,63,0.08); }
+  .barber-card .avatar{
+    flex:0 0 auto; width:40px; height:40px; border-radius:50%; background:var(--green-deep); color:var(--paper);
+    display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-weight:700;
+  }
+  .barber-card .role{ font-size:0.78rem; color:var(--ink-soft); display:block; }
+
+  .field-label{ font-size:0.82rem; font-weight:700; margin:1.4rem 0 0.6rem; display:block; }
+  .field-label:first-child{ margin-top:0; }
+
+  .date-scroll{ display:flex; gap:0.5rem; overflow-x:auto; padding-bottom:0.4rem; -webkit-overflow-scrolling:touch; }
+  .date-btn{
+    flex:0 0 auto; min-width:60px; text-align:center; border:1px solid var(--line);
+    border-radius:8px; padding:0.6rem 0.45rem; cursor:pointer; background:var(--paper);
+  }
+  .date-btn .dn{ font-family:var(--font-display); font-weight:700; font-size:1.1rem; display:block; }
+  .date-btn .dl{ font-size:0.66rem; color:var(--ink-soft); text-transform:uppercase; }
+  .date-btn[aria-pressed="true"]{ background:var(--green); border-color:var(--green); color:var(--paper); }
+  .date-btn[aria-pressed="true"] .dl{ color:rgba(246,244,239,0.75); }
+
+  .slot-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(76px,1fr)); gap:0.5rem; margin-top:0.9rem; }
+  .slot-btn{
+    border:1px solid var(--line); border-radius:6px; padding:0.55rem 0.3rem;
+    text-align:center; font-size:0.8rem; cursor:pointer; background:var(--paper);
+  }
+  .slot-btn[disabled]{ opacity:0.3; text-decoration:line-through; cursor:not-allowed; }
+  .slot-btn[aria-pressed="true"]{ background:var(--green); color:var(--paper); border-color:var(--green); }
+
+  .empty-hint{ color:var(--ink-soft); font-style:italic; font-size:0.92rem; }
+
+  .form-row{ display:grid; gap:1.2rem; max-width:520px; }
+  .field{ display:flex; flex-direction:column; gap:0.35rem; }
+  .field label{ font-size:0.78rem; font-weight:700; }
+  .field input{
+    border:1px solid var(--line); border-radius:var(--radius-sm); padding:0.65rem 0.75rem;
+    font-size:0.95rem; font-family:var(--font-body); background:var(--paper); width:100%;
+  }
+  .field input:focus{ outline:none; border-color:var(--green); }
+  .field.invalid input{ border-color:var(--danger); }
+  .field .field-error{ font-size:0.76rem; color:var(--danger); display:none; margin-top:0.15rem; }
+  .field.invalid .field-error{ display:block; }
+
+  .summary-card{
+    background:var(--paper-dim); border:1px solid var(--line); border-radius:var(--radius-md);
+    padding:1.2rem 1.3rem; max-width:520px;
+  }
+  .summary-row{ display:flex; justify-content:space-between; gap:0.6rem; padding:0.5rem 0; border-bottom:1px solid var(--line-soft); font-size:0.88rem; }
+  .summary-row:last-child{ border-bottom:none; }
+  .summary-row .k{ color:var(--ink-soft); flex:0 0 auto; }
+  .summary-row .v{ font-weight:700; text-align:right; }
+
+  .confirmation{
+    text-align:center; padding:2rem 1.3rem; background:var(--green-deep); color:var(--paper);
+    border-radius:var(--radius-md);
+  }
+  .confirmation .check{
+    width:50px; height:50px; border-radius:50%; background:var(--gold); color:var(--ink);
+    display:flex; align-items:center; justify-content:center; margin:0 auto 1rem; font-size:1.3rem;
+  }
+  .confirmation h3{ font-family:var(--font-display); font-size:1.3rem; margin:0 0 0.5rem; }
+  .confirmation p{ color:rgba(246,244,239,0.85); margin:0 0 1.3rem; }
+
+  .wizard-nav{ display:flex; justify-content:space-between; gap:0.8rem; margin-top:1.8rem; max-width:520px; }
+
+  .appt-table{ width:100%; border-collapse:collapse; font-size:0.85rem; }
+  .appt-table th{
+    text-align:left; font-size:0.7rem; letter-spacing:0.05em; text-transform:uppercase;
+    color:var(--ink-soft); border-bottom:1px solid var(--line); padding:0.6rem 0.4rem;
+  }
+  .appt-table td{ padding:0.7rem 0.4rem; border-bottom:1px solid var(--line-soft); vertical-align:middle; }
+  .appt-table .cancel-btn{
+    background:none; border:1px solid var(--line); border-radius:20px; padding:0.3rem 0.7rem;
+    font-size:0.74rem; cursor:pointer; color:var(--ink-soft);
+  }
+
+  footer{
+    padding:2rem 5vw; text-align:center; color:var(--ink-soft); font-size:0.8rem;
+    border-top:1px solid var(--line);
+  }
+
+  .toast{
+    position:fixed; bottom:16px; left:50%; transform:translateX(-50%) translateY(150%);
+    background:var(--ink); color:var(--paper); padding:0.8rem 1.2rem; border-radius:8px;
+    font-size:0.85rem; font-weight:600; transition:transform .3s ease; z-index:100; max-width:90vw;
+  }
+  .toast.show{ transform:translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="brand-mark"><span class="mark">JR</span> Barbería JR</div>
+  <button class="header-cta" onclick="document.getElementById('reservar').scrollIntoView()">Reservar turno</button>
+</header>
+
+<main>
+
+  <section class="hero" aria-labelledby="hero-title">
+    <h1 id="hero-title">Tu turno, confirmado en menos de un minuto.</h1>
+    <p>Reservá con el barbero de tu confianza, elegí el horario exacto que te acomoda y recibí la confirmación al instante. Sin llamadas, sin esperas.</p>
+    <div class="hero-stats">
+      <div class="stat"><b>1</b><span>Barbero especializado</span></div>
+      <div class="stat"><b>12</b><span>Horarios diarios</span></div>
+    </div>
+  </section>
+
+  <section id="servicios" aria-labelledby="servicios-title">
+    <p class="eyebrow">Catálogo</p>
+    <h2 class="section-title" id="servicios-title">Nuestros servicios</h2>
+    <p class="section-sub">Precios de referencia. El servicio elegido se confirma en el paso de reserva.</p>
+    <div class="option-grid" style="margin-top:1.6rem;" id="servicesPreview"></div>
+  </section>
+
+  <section id="reservar" aria-labelledby="reservar-title">
+    <p class="eyebrow">Reserva guiada</p>
+    <h2 class="section-title" id="reservar-title">Agendá tu turno</h2>
+    <p class="section-sub">Completá los cinco pasos para confirmar tu cita.</p>
+
+    <ol class="wizard-steps" id="wizardSteps" style="margin-top:1.8rem;">
+      <li data-step="1"><span class="step-num">1</span>Servicio</li>
+      <li data-step="2"><span class="step-num">2</span>Profesional</li>
+      <li data-step="3"><span class="step-num">3</span>Fecha</li>
+      <li data-step="4"><span class="step-num">4</span>Pago</li>
+      <li data-step="5"><span class="step-num">5</span>Confirmar</li>
+    </ol>
+
+    <div class="wizard-panel" data-panel="1">
+      <span class="field-label">Elegí el servicio</span>
+      <div class="option-grid" id="serviceGrid" role="group" aria-label="Servicios disponibles"></div>
+      <div class="wizard-nav">
+        <span></span>
+        <button class="btn btn-primary" id="toStep2" disabled onclick="goToStep(2)">Continuar</button>
+      </div>
+    </div>
+
+    <div class="wizard-panel" data-panel="2">
+      <span class="field-label">Elegí a tu profesional</span>
+      <div class="barber-grid" id="barberGrid" role="group" aria-label="Profesionales disponibles"></div>
+      <div class="wizard-nav">
+        <button class="btn btn-outline" onclick="goToStep(1)">Atrás</button>
+        <button class="btn btn-primary" id="toStep3" disabled onclick="goToStep(3)">Continuar</button>
+      </div>
+    </div>
+
+    <div class="wizard-panel" data-panel="3">
+      <span class="field-label">Elegí el día</span>
+      <p class="section-sub" style="margin-bottom:0.8rem;">Atendemos de lunes a sábado, de 9:00 am a 12:30 pm y de 2:30 pm a 6:30 pm. No se reserva los domingos.</p>
+      <div class="date-scroll" id="dateScroll" role="group" aria-label="Días disponibles"></div>
+      <span class="field-label">Elegí el horario</span>
+      <div class="slot-grid" id="slotGrid" role="group" aria-label="Horarios disponibles"></div>
+      <div class="wizard-nav">
+        <button class="btn btn-outline" onclick="goToStep(2)">Atrás</button>
+        <button class="btn btn-primary" id="toStep4" disabled onclick="goToStep(4)">Continuar</button>
+      </div>
+    </div>
+
+    <div class="wizard-panel" data-panel="4">
+      <span class="field-label">Elegí el método de pago</span>
+      <div class="option-grid" id="paymentGrid" role="group" aria-label="Métodos de pago disponibles"></div>
+
+      <div id="mobilePaymentInfo" class="summary-card" style="display:none; margin-top:1.2rem;"></div>
+
+      <div class="field" id="fieldReference" style="display:none; max-width:340px; margin-top:1.1rem;">
+        <label for="referenceInput">Número de referencia del pago</label>
+        <input id="referenceInput" type="text" inputmode="numeric" placeholder="Ej: 004521987">
+        <span class="field-error">Ingresá el número de referencia luego de cancelar el pago móvil.</span>
+      </div>
+
+      <div class="wizard-nav">
+        <button class="btn btn-outline" onclick="goToStep(3)">Atrás</button>
+        <button class="btn btn-primary" id="toStep5" disabled onclick="handlePaymentContinue()">Continuar</button>
+      </div>
+    </div>
+
+    <div class="wizard-panel" data-panel="5">
+      <div id="detailsForm">
+        <div class="form-row">
+          <div class="field" id="fieldName">
+            <label for="nameInput">Nombre y apellido</label>
+            <input id="nameInput" type="text" autocomplete="name" placeholder="Ej: Julián Torres">
+            <span class="field-error">Ingresá tu nombre completo.</span>
+          </div>
+          <div class="field" id="fieldPhone">
+            <label for="phoneInput">Teléfono</label>
+            <input id="phoneInput" type="tel" autocomplete="tel" placeholder="Ej: 099 123 456">
+            <span class="field-error">Ingresá un teléfono válido (mínimo 7 dígitos).</span>
+          </div>
+        </div>
+
+        <span class="field-label">Resumen de tu reserva</span>
+        <div class="summary-card" id="summaryCard"></div>
+
+        <div class="wizard-nav">
+          <button class="btn btn-outline" onclick="goToStep(4)">Atrás</button>
+          <button class="btn btn-primary" onclick="submitBooking()">Confirmar reserva</button>
+        </div>
+      </div>
+
+      <div id="confirmationBlock" style="display:none; max-width:520px; margin-top:1rem;">
+        <div class="confirmation" role="status">
+          <div class="check">&#10003;</div>
+          <h3>Reserva confirmada</h3>
+          <p id="confirmationText"></p>
+          <button class="btn btn-primary" onclick="resetWizard()">Reservar otro turno</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="citas" aria-labelledby="citas-title">
+    <p class="eyebrow">Historial sincronizado</p>
+    <h2 class="section-title" id="citas-title">Mis citas reservadas</h2>
+    <p class="section-sub">Las reservas están sincronizadas en la nube y son visibles desde cualquier dispositivo en tiempo real.</p>
+    <div id="apptTableWrap" style="margin-top:1.6rem;"></div>
+
+    <h2 class="section-title" style="margin-top:2.4rem; font-size:1.2rem;">Notificaciones enviadas al barbero</h2>
+    <p class="section-sub">Aviso simulado hacia el número 0412-685.5494 cada vez que se confirma una cita.</p>
+    <div id="notifyListWrap" style="margin-top:1.1rem;"></div>
+  </section>
+
+</main>
+
+<footer>Barbería JR — Datos sincronizados en la nube con Firebase.</footer>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<!-- SDK de Firebase para sincronización multi-dispositivo -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<script>
+/* =========================================================
+   FIREBASE CONFIGURATION
+   (Reemplaza con tus claves de Firebase Console para producción)
+========================================================= */
+var firebaseConfig = {
+  apiKey: "AIzaSyDemoKeyForBarberiaJR123456789",
+  authDomain: "barberia-jr-demo.firebaseapp.com",
+  projectId: "barberia-jr-demo",
+  storageBucket: "barberia-jr-demo.appspot.com",
+  messagingSenderId: "1234567890",
+  appId: "1:1234567890:web:abcdef123456"
+};
+
+var db = null;
+try {
+  firebase.initializeApp(firebaseConfig);
+  db = firebase.firestore();
+} catch(e) {
+  console.warn("Firebase no se pudo inicializar en modo online, usando almacenamiento local de respaldo.", e);
+}
+
+/* =========================================================
+   DATA (Precios en EUROS)
+========================================================= */
+var SERVICES = [
+  { id:'corte',  name:'Corte',              duration:'50 min',    price:'5 €' },
+  { id:'barba',  name:'Arreglo de barba',   duration:'15 min',    price:'2 €' },
+  { id:'combo',  name:'Corte + barba',      duration:'1 h 10 min', price:'7 €' },
+  { id:'nino',   name:'Corte niño',         duration:'1 h',       price:'6 €' }
+];
+
+var BARBERS = [
+  { id:'jesuangel', name:'Jesuangel Rodríguez', role:'Cortes, barba y diseño' }
+];
+
+var PAYMENT_METHODS = [
+  { id:'efectivo', name:'Efectivo',   meta:'Pagás en el local al finalizar' },
+  { id:'movil',    name:'Pago móvil', meta:'Transferencia desde tu banco' }
+];
+
+var BARBER_NOTIFY_PHONE = '0412-685.5494';
+
+var BARBER_MOBILE_PAYMENT = {
+  titular: 'Jesuangel Rodríguez',
+  cedula: 'V-30.948.784',
+  telefono: '0412-685.5494',
+  banco: 'Banco del Tesoro (0163)'
+};
+
+var SLOT_TIMES = ['09:00','09:45','10:30','11:15','12:00','14:30','15:15','16:00','16:45','17:30','18:15'];
+var DAY_NAMES = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+var MONTH_NAMES = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+
+function formatTime12h(t){
+  var parts = t.split(':');
+  var h = parseInt(parts[0], 10);
+  var m = parts[1];
+  var suffix = h >= 12 ? 'pm' : 'am';
+  h = h % 12;
+  if(h === 0) h = 12;
+  return h + ':' + m + ' ' + suffix;
+}
+
+var STORAGE_KEY = 'barberiaJR_bookings_v2';
+var NOTIFY_KEY = 'barberiaJR_notifications_v2';
+
+var state = {
+  step: 1,
+  service: null,
+  barber: null,
+  dateIndex: null,
+  slot: null,
+  payment: null,
+  reference: '',
+  name: '',
+  phone: ''
+};
+
+var bookings = [];
+var notifications = [];
+var takenSlots = {};
+
+var dates = [];
+(function buildDates(){
+  var offset = 0;
+  while(dates.length < 7){
+    var d = new Date();
+    d.setDate(d.getDate() + offset);
+    offset++;
+    if(d.getDay() === 0) continue;
+    dates.push({ date: d, dayName: DAY_NAMES[d.getDay()], label: d.getDate() + ' ' + MONTH_NAMES[d.getMonth()] });
+  }
+})();
+
+/* =========================================================
+   REALTIME SYNC (FIREBASE CON FALLBACK A LOCALSTORAGE)
+========================================================= */
+function initDataSync(){
+  if(db){
+    // Escuchar reservas en tiempo real desde la nube
+    db.collection("bookings").onSnapshot(function(snapshot) {
+      bookings = [];
+      takenSlots = {};
+      snapshot.forEach(function(doc) {
+        var data = doc.data();
+        data.id = doc.id;
+        bookings.push(data);
+        if(data.slotKey) takenSlots[data.slotKey] = true;
+      });
+      renderSlotGrid();
+      renderAppointmentsTable();
+    }, function(err) {
+      console.warn("Fallo lectura Firebase, usando local:", err);
+      loadLocalBackup();
+    });
+
+    // Escuchar notificaciones en tiempo real
+    db.collection("notifications").orderBy("createdAt", "desc").onSnapshot(function(snapshot) {
+      notifications = [];
+      snapshot.forEach(function(doc) {
+        notifications.push(doc.data());
+      });
+      renderNotifications();
+    });
+  } else {
+    loadLocalBackup();
+  }
+}
+
+function loadLocalBackup(){
+  try{
+    var raw = localStorage.getItem(STORAGE_KEY);
+    if(raw){
+      var parsed = JSON.parse(raw);
+      bookings = parsed.bookings || [];
+      var slots = parsed.takenSlots || [];
+      for(var i=0;i<slots.length;i++){ takenSlots[slots[i]] = true; }
+    }
+    var rawNotify = localStorage.getItem(NOTIFY_KEY);
+    if(rawNotify) notifications = JSON.parse(rawNotify);
+    renderSlotGrid();
+    renderAppointmentsTable();
+    renderNotifications();
+  }catch(e){
+    console.warn('Error leyendo copia local:', e);
+  }
+}
+
+function saveLocalBackup(){
+  try{
+    var slotKeys = [];
+    for(var k in takenSlots){ if(takenSlots.hasOwnProperty(k)) slotKeys.push(k); }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ bookings: bookings, takenSlots: slotKeys }));
+    localStorage.setItem(NOTIFY_KEY, JSON.stringify(notifications));
+  }catch(e){}
+}
+
+/* =========================================================
+   RENDER
+========================================================= */
+function renderServicePreview(){
+  var grid = document.getElementById('servicesPreview');
+  var html = '';
+  for(var i=0;i<SERVICES.length;i++){
+    var s = SERVICES[i];
+    html += '<div class="option-card" style="cursor:default;">' +
+              '<h4>' + s.name + '</h4>' +
+              '<p class="meta">' + s.duration + '</p>' +
+              '<p class="price">' + s.price + '</p>' +
+            '</div>';
+  }
+  grid.innerHTML = html;
+}
+
+function renderServiceGrid(){
+  var grid = document.getElementById('serviceGrid');
+  var html = '';
+  for(var i=0;i<SERVICES.length;i++){
+    var s = SERVICES[i];
+    var pressed = state.service === s.id ? 'true' : 'false';
+    html += '<button type="button" class="option-card" data-id="' + s.id + '" aria-pressed="' + pressed + '">' +
+              '<h4>' + s.name + '</h4>' +
+              '<p class="meta">' + s.duration + '</p>' +
+              '<p class="price">' + s.price + '</p>' +
+            '</button>';
+  }
+  grid.innerHTML = html;
+  var cards = grid.querySelectorAll('.option-card');
+  for(var j=0;j<cards.length;j++){
+    cards[j].addEventListener('click', (function(card){
+      return function(){
+        state.service = card.getAttribute('data-id');
+        renderServiceGrid();
+        document.getElementById('toStep2').disabled = false;
+      };
+    })(cards[j]));
+  }
+}
+
+function renderBarberGrid(){
+  var grid = document.getElementById('barberGrid');
+  var html = '';
+  for(var i=0;i<BARBERS.length;i++){
+    var b = BARBERS[i];
+    var pressed = state.barber === b.id ? 'true' : 'false';
+    html += '<button type="button" class="barber-card" data-id="' + b.id + '" aria-pressed="' + pressed + '">' +
+              '<span class="avatar">' + b.name.charAt(0) + '</span>' +
+              '<span><strong>' + b.name + '</strong><span class="role">' + b.role + '</span></span>' +
+            '</button>';
+  }
+  grid.innerHTML = html;
+  var cards = grid.querySelectorAll('.barber-card');
+  for(var j=0;j<cards.length;j++){
+    cards[j].addEventListener('click', (function(card){
+      return function(){
+        state.barber = card.getAttribute('data-id');
+        state.slot = null;
+        renderBarberGrid();
+        document.getElementById('toStep3').disabled = false;
+      };
+    })(cards[j]));
+  }
+}
+
+function renderDateScroll(){
+  var row = document.getElementById('dateScroll');
+  var html = '';
+  for(var i=0;i<dates.length;i++){
+    var d = dates[i];
+    var pressed = state.dateIndex === i ? 'true' : 'false';
+    html += '<button type="button" class="date-btn" data-i="' + i + '" aria-pressed="' + pressed + '">' +
+              '<span class="dn">' + d.date.getDate() + '</span>' +
+              '<span class="dl">' + d.dayName + '</span>' +
+            '</button>';
+  }
+  row.innerHTML = html;
+  var btns = row.querySelectorAll('.date-btn');
+  for(var j=0;j<btns.length;j++){
+    btns[j].addEventListener('click', (function(btn){
+      return function(){
+        state.dateIndex = parseInt(btn.getAttribute('data-i'), 10);
+        state.slot = null;
+        renderDateScroll();
+        renderSlotGrid();
+        document.getElementById('toStep4').disabled = true;
+      };
+    })(btns[j]));
+  }
+}
+
+function renderSlotGrid(){
+  var grid = document.getElementById('slotGrid');
+  if(state.dateIndex === null){
+    grid.innerHTML = '<p class="empty-hint">Elegí un día para ver los horarios.</p>';
+    return;
+  }
+  var html = '';
+  for(var i=0;i<SLOT_TIMES.length;i++){
+    var t = SLOT_TIMES[i];
+    var key = state.dateIndex + '_' + state.barber + '_' + t;
+    var taken = !!takenSlots[key];
+    var pressed = state.slot === t ? 'true' : 'false';
+    html += '<button type="button" class="slot-btn" data-t="' + t + '" ' + (taken ? 'disabled' : '') + ' aria-pressed="' + pressed + '">' + formatTime12h(t) + '</button>';
+  }
+  grid.innerHTML = html;
+  var btns = grid.querySelectorAll('.slot-btn:not([disabled])');
+  for(var j=0;j<btns.length;j++){
+    btns[j].addEventListener('click', (function(btn){
+      return function(){
+        state.slot = btn.getAttribute('data-t');
+        renderSlotGrid();
+        document.getElementById('toStep4').disabled = false;
+      };
+    })(btns[j]));
+  }
+}
+
+function renderPaymentGrid(){
+  var grid = document.getElementById('paymentGrid');
+  var html = '';
+  for(var i=0;i<PAYMENT_METHODS.length;i++){
+    var p = PAYMENT_METHODS[i];
+    var pressed = state.payment === p.id ? 'true' : 'false';
+    html += '<button type="button" class="option-card" data-id="' + p.id + '" aria-pressed="' + pressed + '">' +
+              '<h4>' + p.name + '</h4>' +
+              '<p class="meta">' + p.meta + '</p>' +
+            '</button>';
+  }
+  grid.innerHTML = html;
+  var cards = grid.querySelectorAll('.option-card');
+  for(var j=0;j<cards.length;j++){
+    cards[j].addEventListener('click', (function(card){
+      return function(){
+        state.payment = card.getAttribute('data-id');
+        renderPaymentGrid();
+        document.getElementById('toStep5').disabled = !state.payment;
+      };
+    })(cards[j]));
+  }
+
+  var infoBox = document.getElementById('mobilePaymentInfo');
+  var refField = document.getElementById('fieldReference');
+
+  if(state.payment === 'movil'){
+    infoBox.style.display = 'block';
+    infoBox.innerHTML =
+      '<div class="summary-row"><span class="k">Titular</span><span class="v">' + BARBER_MOBILE_PAYMENT.titular + '</span></div>' +
+      '<div class="summary-row"><span class="k">Cédula</span><span class="v">' + BARBER_MOBILE_PAYMENT.cedula + '</span></div>' +
+      '<div class="summary-row"><span class="k">Teléfono</span><span class="v">' + BARBER_MOBILE_PAYMENT.telefono + '</span></div>' +
+      '<div class="summary-row"><span class="k">Banco</span><span class="v">' + BARBER_MOBILE_PAYMENT.banco + '</span></div>';
+    refField.style.display = 'block';
+  }else{
+    infoBox.style.display = 'none';
+    infoBox.innerHTML = '';
+    refField.style.display = 'none';
+    refField.classList.remove('invalid');
+  }
+}
+
+function handlePaymentContinue(){
+  if(state.payment === 'movil'){
+    state.reference = document.getElementById('referenceInput').value.trim();
+    var refValid = state.reference.length >= 4;
+    document.getElementById('fieldReference').classList.toggle('invalid', !refValid);
+    if(!refValid) return;
+  }
+  goToStep(5);
+}
+
+function renderSummary(){
+  var svc = null, brb = null, pay = null;
+  for(var i=0;i<SERVICES.length;i++){ if(SERVICES[i].id === state.service) svc = SERVICES[i]; }
+  for(var j=0;j<BARBERS.length;j++){ if(BARBERS[j].id === state.barber) brb = BARBERS[j]; }
+  for(var k=0;k<PAYMENT_METHODS.length;k++){ if(PAYMENT_METHODS[k].id === state.payment) pay = PAYMENT_METHODS[k]; }
+  var dt = state.dateIndex !== null ? dates[state.dateIndex] : null;
+  var card = document.getElementById('summaryCard');
+  var html =
+    '<div class="summary-row"><span class="k">Servicio</span><span class="v">' + (svc ? svc.name + ' · ' + svc.price : '—') + '</span></div>' +
+    '<div class="summary-row"><span class="k">Profesional</span><span class="v">' + (brb ? brb.name : '—') + '</span></div>' +
+    '<div class="summary-row"><span class="k">Fecha</span><span class="v">' + (dt ? dt.dayName + ' ' + dt.label : '—') + '</span></div>' +
+    '<div class="summary-row"><span class="k">Horario</span><span class="v">' + (state.slot ? formatTime12h(state.slot) : '—') + '</span></div>' +
+    '<div class="summary-row"><span class="k">Pago</span><span class="v">' + (pay ? pay.name : '—') + '</span></div>';
+  if(state.payment === 'movil'){
+    html += '<div class="summary-row"><span class="k">Referencia</span><span class="v">' + (state.reference || '—') + '</span></div>';
+  }
+  card.innerHTML = html;
+}
+
+function goToStep(n){
+  state.step = n;
+  var panels = document.querySelectorAll('.wizard-panel');
+  for(var i=0;i<panels.length;i++){
+    var p = panels[i];
+    var isActive = parseInt(p.getAttribute('data-panel'), 10) === n;
+    if(isActive){ p.classList.add('active'); } else { p.classList.remove('active'); }
+  }
+  var steps = document.querySelectorAll('#wizardSteps li');
+  for(var j=0;j<steps.length;j++){
+    var li = steps[j];
+    var s = parseInt(li.getAttribute('data-step'), 10);
+    li.classList.toggle('current', s === n);
+    li.classList.toggle('done', s < n);
+  }
+  if(n === 5) renderSummary();
+}
+
+function validateField(id, isValid){
+  document.getElementById(id).classList.toggle('invalid', !isValid);
+}
+
+function submitBooking(){
+  state.name = document.getElementById('nameInput').value.trim();
+  state.phone = document.getElementById('phoneInput').value.trim();
+
+  var nameValid = state.name.length >= 3;
+  var phoneValid = state.phone.replace(/\D/g,'').length >= 7;
+
+  validateField('fieldName', nameValid);
+  validateField('fieldPhone', phoneValid);
+
+  if(!nameValid || !phoneValid) return;
+
+  var svc = null, brb = null, pay = null;
+  for(var i=0;i<SERVICES.length;i++){ if(SERVICES[i].id === state.service) svc = SERVICES[i]; }
+  for(var j=0;j<BARBERS.length;j++){ if(BARBERS[j].id === state.barber) brb = BARBERS[j]; }
+  for(var k=0;k<PAYMENT_METHODS.length;k++){ if(PAYMENT_METHODS[k].id === state.payment) pay = PAYMENT_METHODS[k]; }
+  var dt = dates[state.dateIndex];
+  var slotKey = state.dateIndex + '_' + state.barber + '_' + state.slot;
+
+  var newBooking = {
+    serviceName: svc.name,
+    barberName: brb.name,
+    dateLabel: dt.dayName + ' ' + dt.label,
+    slot: state.slot,
+    paymentName: pay.name,
+    reference: state.payment === 'movil' ? state.reference : '—',
+    name: state.name,
+    phone: state.phone,
+    slotKey: slotKey,
+    createdAt: new Date().getTime()
+  };
+
+  var newNotify = {
+    to: BARBER_NOTIFY_PHONE,
+    text: 'Nueva cita: ' + newBooking.name + ' — ' + newBooking.serviceName + ' — ' + newBooking.dateLabel + ' ' + formatTime12h(newBooking.slot),
+    sentAt: new Date().toLocaleString(),
+    createdAt: new Date().getTime()
+  };
+
+  // Guardar en la nube (Firestore)
+  if(db){
+    db.collection("bookings").add(newBooking);
+    db.collection("notifications").add(newNotify);
+  } else {
+    newBooking.id = 'b_' + Date.now();
+    takenSlots[slotKey] = true;
+    bookings.push(newBooking);
+    notifications.unshift(newNotify);
+    saveLocalBackup();
+    renderAppointmentsTable();
+    renderNotifications();
+  }
+
+  var msg = state.name + ', tu turno de ' + svc.name + ' con ' + brb.name + ' quedó reservado para el ' +
+            dt.dayName + ' ' + dt.label + ' a las ' + formatTime12h(state.slot) + '. Pago: ' + pay.name +
+            (state.payment === 'movil' ? (' (referencia ' + state.reference + ')') : '') + '.';
+
+  document.getElementById('detailsForm').style.display = 'none';
+  document.getElementById('confirmationBlock').style.display = 'block';
+  document.getElementById('confirmationText').textContent = msg;
+
+  showToast('Reserva confirmada y sincronizada en tiempo real.');
+}
+
+function resetWizard(){
+  state.service = null;
+  state.barber = null;
+  state.dateIndex = null;
+  state.slot = null;
+  state.payment = null;
+  state.reference = '';
+
+  document.getElementById('detailsForm').style.display = 'block';
+  document.getElementById('confirmationBlock').style.display = 'none';
+  document.getElementById('toStep2').disabled = true;
+  document.getElementById('toStep3').disabled = true;
+  document.getElementById('toStep4').disabled = true;
+  document.getElementById('toStep5').disabled = true;
+  document.getElementById('referenceInput').value = '';
+  validateField('fieldName', true);
+  validateField('fieldPhone', true);
+  validateField('fieldReference', true);
+
+  renderServiceGrid();
+  renderBarberGrid();
+  renderDateScroll();
+  renderSlotGrid();
+  renderPaymentGrid();
+  goToStep(1);
+}
+
+function renderAppointmentsTable(){
+  var wrap = document.getElementById('apptTableWrap');
+  if(bookings.length === 0){
+    wrap.innerHTML = '<p class="empty-hint">No hay reservas activas en este momento.</p>';
+    return;
+  }
+  var rows = '';
+  for(var i=0;i<bookings.length;i++){
+    var b = bookings[i];
+    rows += '<tr>' +
+              '<td>' + b.name + '<br><span style="color:var(--ink-soft); font-size:0.76rem;">' + b.phone + '</span></td>' +
+              '<td>' + b.serviceName + '</td>' +
+              '<td>' + b.barberName + '</td>' +
+              '<td>' + b.dateLabel + '</td>' +
+              '<td>' + formatTime12h(b.slot) + '</td>' +
+              '<td>' + b.paymentName + '</td>' +
+              '<td>' + b.reference + '</td>' +
+              '<td><button class="cancel-btn" data-id="' + b.id + '">Cancelar</button></td>' +
+            '</tr>';
+  }
+  wrap.innerHTML =
+    '<div style="overflow-x:auto;"><table class="appt-table"><thead><tr>' +
+      '<th>Cliente</th><th>Servicio</th><th>Profesional</th><th>Fecha</th><th>Hora</th><th>Pago</th><th>Ref.</th><th></th>' +
+    '</tr></thead><tbody>' + rows + '</tbody></table></div>';
+
+  var btns = wrap.querySelectorAll('.cancel-btn');
+  for(var j=0;j<btns.length;j++){
+    btns[j].addEventListener('click', (function(btn){
+      return function(){
+        var id = btn.getAttribute('data-id');
+        if(db){
+          db.collection("bookings").doc(id).delete();
+        } else {
+          var found = null;
+          for(var k=0;k<bookings.length;k++){ if(bookings[k].id === id) found = bookings[k]; }
+          if(found) delete takenSlots[found.slotKey];
+          bookings = bookings.filter(function(b){ return b.id !== id; });
+          saveLocalBackup();
+          renderAppointmentsTable();
+        }
+        showToast('Cita cancelada.');
+      };
+    })(btns[j]));
+  }
+}
+
+function renderNotifications(){
+  var wrap = document.getElementById('notifyListWrap');
+  if(notifications.length === 0){
+    wrap.innerHTML = '<p class="empty-hint">Todavía no se generaron notificaciones.</p>';
+    return;
+  }
+  var html = '';
+  for(var i=0;i<notifications.length;i++){
+    var n = notifications[i];
+    html += '<div class="summary-card" style="margin-bottom:0.7rem; max-width:640px;">' +
+              '<div class="summary-row"><span class="k">Para</span><span class="v">' + n.to + '</span></div>' +
+              '<div class="summary-row"><span class="k">Mensaje</span><span class="v" style="text-align:left; max-width:70%;">' + n.text + '</span></div>' +
+              '<div class="summary-row"><span class="k">Enviado</span><span class="v">' + n.sentAt + '</span></div>' +
+            '</div>';
+  }
+  wrap.innerHTML = html;
+}
+
+var toastTimer = null;
+function showToast(msg){
+  var el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function(){ el.classList.remove('show'); }, 3200);
+}
+
+/* =========================================================
+   INIT
+========================================================= */
+initDataSync();
+
+document.getElementById('nameInput').addEventListener('input', function(){ validateField('fieldName', true); });
+document.getElementById('phoneInput').addEventListener('input', function(){ validateField('fieldPhone', true); });
+document.getElementById('referenceInput').addEventListener('input', function(){ validateField('fieldReference', true); });
+
+renderServicePreview();
+renderServiceGrid();
+renderBarberGrid();
+renderDateScroll();
+renderSlotGrid();
+renderPaymentGrid();
+goToStep(1);
+</script>
+</body>
+</html>
