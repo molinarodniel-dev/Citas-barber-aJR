@@ -901,6 +901,7 @@ function showToast(msg){
 /* =========================================================
    INIT
 ========================================================= */
+  </script>
 initDataSync();
 
 document.getElementById('nameInput').addEventListener('input', function(){ validateField('fieldName', true); });
@@ -914,6 +915,27 @@ renderDateScroll();
 renderSlotGrid();
 renderPaymentGrid();
 goToStep(1);
+  
+  <!-- SDKs de Firebase (compatibles para navegador) -->
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+<script>
+  // Configuración de tu proyecto Firebase
+  const firebaseConfig = {
+    apiKey: AIzaSyA3ysmCGt2BtVExibFg
+    authDomain: "barber-b9c91.firebaseapp.com",
+    projectId: "barber-b9c91",
+    storageBucket: "barber-b9c91.firebasestorage.app",
+    messagingSenderId: "744257756242",
+    appId: 1:744257756242:web:e08a45
+    measurementId: "G-G6CX1KK0CG"
+  };
+
+  // Inicializar Firebase y la base de datos
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
 </script>
+  
 </body>
 </html>
