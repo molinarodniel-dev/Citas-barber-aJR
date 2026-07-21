@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Barbería JR - Citas</title>
   <style>
-    /* Estilos generales */
     :root {
       --bg-color: #f7f6f0;
       --card-bg: #ffffff;
@@ -57,15 +56,9 @@
       letter-spacing: 1px;
       text-transform: uppercase;
     }
-    h1 {
-      margin: 4px 0 8px 0;
-      font-size: 1.8rem;
-    }
-    p {
-      color: #555;
-      font-size: 0.95rem;
-    }
-    
+    h1 { margin: 4px 0 8px 0; font-size: 1.8rem; }
+    p { color: #555; font-size: 0.95rem; }
+
     /* Pasos */
     .steps-container {
       display: flex;
@@ -80,6 +73,7 @@
       padding: 10px 2px;
       font-size: 0.75rem;
       color: #666;
+      cursor: pointer;
     }
     .step-item.active {
       background: white;
@@ -95,6 +89,7 @@
       background: #d1cfc4;
       border-radius: 50%;
       margin-bottom: 4px;
+      line-height: 18px;
     }
     .step-item.active .step-num {
       background: #c5a059;
@@ -104,7 +99,7 @@
     /* Grillas y tarjetas */
     .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
       gap: 12px;
       margin-top: 15px;
     }
@@ -121,58 +116,26 @@
       background: #fffdf7;
     }
 
-    /* Formularios y entradas */
-    .form-group {
-      margin-top: 15px;
-    }
-    .form-group label {
-      display: block;
-      font-size: 0.85rem;
-      font-weight: bold;
-      margin-bottom: 5px;
-    }
-    .form-group input {
-      width: 100%;
-      padding: 10px;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      box-sizing: border-box;
-    }
+    .step-panel { display: none; }
+    .step-panel.active { display: block; }
 
-    /* Tabla de citas */
-    .appointments-list {
-      margin-top: 15px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-    .appointment-item {
+    .form-group { margin-top: 15px; }
+    .form-group label { display: block; font-size: 0.85rem; font-weight: bold; margin-bottom: 5px; }
+    .form-group input { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; box-sizing: border-box; }
+
+    /* Estilos de la tabla de citas */
+    .summary-card {
       background: white;
       border: 1px solid var(--border);
-      padding: 12px;
       border-radius: 8px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+      padding: 12px;
+      margin-bottom: 10px;
     }
-    .appointment-item strong {
-      display: block;
-      color: #111;
-    }
-    .appointment-item small {
-      color: #666;
-    }
-    .btn-delete {
-      background: #ff4d4d;
-      color: white;
-      border: none;
-      padding: 6px 10px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 0.8rem;
-    }
+    .summary-row { display: flex; justify-content: space-between; font-size: 0.9rem; margin-bottom: 4px; }
+    .summary-row .k { color: #666; }
+    .summary-row .v { font-weight: bold; }
+    .btn-delete { background: #ff4d4d; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; }
 
-    /* Toast */
     #toast {
       visibility: hidden;
       min-width: 200px;
@@ -208,24 +171,58 @@
 
   <div class="subtitle">RESERVA GUIADA</div>
   <h1>Agendá tu turno</h1>
-  <p>Completá los datos para confirmar tu cita.</p>
+  <p>Completá los cinco pasos para confirmar tu cita.</p>
 
-  <!-- Selección de Servicio -->
-  <h3>1. Elige un servicio</h3>
-  <div id="serviceGrid" class="grid"></div>
-
-  <!-- Datos del Cliente -->
-  <h3 style="margin-top:25px;">2. Tus Datos</h3>
-  <div class="form-group">
-    <label for="clientName">Nombre completo</label>
-    <input type="text" id="clientName" placeholder="Ej: Juan Pérez">
-  </div>
-  <div class="form-group">
-    <label for="clientPhone">Teléfono</label>
-    <input type="tel" id="clientPhone" placeholder="Ej: 04121234567">
+  <div class="steps-container">
+    <div class="step-item active" onclick="goToStep(1)" id="stepTab1"><div class="step-num">1</div><br>Servicio</div>
+    <div class="step-item" onclick="goToStep(2)" id="stepTab2"><div class="step-num">2</div><br>Profesional</div>
+    <div class="step-item" onclick="goToStep(3)" id="stepTab3"><div class="step-num">3</div><br>Fecha</div>
+    <div class="step-item" onclick="goToStep(4)" id="stepTab4"><div class="step-num">4</div><br>Pago</div>
+    <div class="step-item" onclick="goToStep(5)" id="stepTab5"><div class="step-num">5</div><br>Confirmar</div>
   </div>
 
-  <button class="btn-action" style="margin-top: 20px; width: 100%; padding: 12px;" onclick="confirmBooking()">Confirmar Cita</button>
+  <!-- Paso 1 -->
+  <div id="stepPanel1" class="step-panel active">
+    <h3>Selecciona un servicio</h3>
+    <div id="serviceGrid" class="grid"></div>
+  </div>
+
+  <!-- Paso 2 -->
+  <div id="stepPanel2" class="step-panel">
+    <h3>Selecciona tu profesional</h3>
+    <div id="barberGrid" class="grid"></div>
+  </div>
+
+  <!-- Paso 3 -->
+  <div id="stepPanel3" class="step-panel">
+    <h3>Selecciona la fecha y hora</h3>
+    <div id="dateScroll" class="grid"></div>
+    <div id="slotGrid" class="grid" style="margin-top:15px;"></div>
+  </div>
+
+  <!-- Paso 4 -->
+  <div id="stepPanel4" class="step-panel">
+    <h3>Método de pago</h3>
+    <div id="paymentGrid" class="grid"></div>
+  </div>
+
+  <!-- Paso 5 -->
+  <div id="stepPanel5" class="step-panel">
+    <h3>Confirmar Reserva</h3>
+    <div class="form-group">
+      <label>Nombre completo</label>
+      <input type="text" id="nameInput" placeholder="Ingresa tu nombre">
+    </div>
+    <div class="form-group">
+      <label>Teléfono</label>
+      <input type="tel" id="phoneInput" placeholder="Ingresa tu teléfono">
+    </div>
+    <div class="form-group">
+      <label>Referencia de Pago</label>
+      <input type="text" id="referenceInput" placeholder="Ej: 123456">
+    </div>
+    <button class="btn-action" style="width:100%; margin-top:20px; padding:12px;" onclick="confirmBooking()">Confirmar Cita</button>
+  </div>
 
   <div id="toast">Notificación</div>
 
@@ -234,17 +231,19 @@
   <div class="subtitle">HISTORIAL SINCRONIZADO</div>
   <h2>Mis citas reservadas</h2>
   <p>Las reservas están sincronizadas en la nube y son visibles desde cualquier dispositivo en tiempo real.</p>
-  
-  <div id="appointmentsList" class="appointments-list">
-    <p>Cargando citas guardadas...</p>
-  </div>
+  <div id="appointmentsTable"></div>
 
-  <!-- Cargar SDKs de Firebase (v10 COMPAT) -->
+  <div class="subtitle" style="margin-top:20px;">NOTIFICACIONES</div>
+  <h2>Notificaciones enviadas al barbero</h2>
+  <p>Aviso simulado hacia el número 0412-685.5494 cada vez que se confirma una cita.</p>
+  <div id="notifyListWrap"></div>
+
+  <!-- SDKs de Firebase -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
   <script>
-    // 1. Configuración de tu Firebase
+    // Configuración Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyA3ysmCGt2BtVExibFg",
       authDomain: "barber-b9c91.firebaseapp.com",
@@ -255,122 +254,179 @@
       measurementId: "G-G6CX1KK0CG"
     };
 
-    // Inicializar Firebase y la Base de Datos
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
+    // Datos globales
     const services = [
       { id: 'corte', name: 'Corte Tradicional', price: '$10' },
       { id: 'barba', name: 'Arreglo de Barba', price: '$5' },
       { id: 'combo', name: 'Corte + Barba', price: '$13' }
     ];
 
-    let selectedService = null;
+    const barbers = [
+      { id: 'jr', name: 'Barbero JR' },
+      { id: 'alex', name: 'Alex' }
+    ];
 
-    // Renderizar servicios
-    function renderServices() {
-      const grid = document.getElementById('serviceGrid');
-      grid.innerHTML = services.map(s => `
-        <div class="card ${selectedService === s.id ? 'selected' : ''}" onclick="selectService('${s.id}')">
-          <strong>${s.name}</strong>
-          <p>${s.price}</p>
+    const dates = ['Hoy', 'Mañana', 'Pasado mañana'];
+    const slots = ['09:00 AM', '10:00 AM', '02:00 PM', '04:00 PM'];
+    const payments = ['Pago Móvil', 'Efectivo', 'Zelle'];
+
+    let selService = null, selBarber = null, selDate = null, selSlot = null, selPayment = null;
+    let bookings = [];
+    let notifications = [];
+
+    function goToStep(step) {
+      for (let i = 1; i <= 5; i++) {
+        document.getElementById(`stepPanel${i}`).classList.remove('active');
+        document.getElementById(`stepTab${i}`).classList.remove('active');
+      }
+      document.getElementById(`stepPanel${step}`).classList.add('active');
+      document.getElementById(`stepTab${step}`).classList.add('active');
+    }
+
+    function renderServiceGrid() {
+      document.getElementById('serviceGrid').innerHTML = services.map(s => `
+        <div class="card ${selService === s.id ? 'selected' : ''}" onclick="selService='${s.id}'; renderServiceGrid(); goToStep(2);">
+          <strong>${s.name}</strong><p>${s.price}</p>
         </div>
       `).join('');
     }
 
-    function selectService(id) {
-      selectedService = id;
-      renderServices();
+    function renderBarberGrid() {
+      document.getElementById('barberGrid').innerHTML = barbers.map(b => `
+        <div class="card ${selBarber === b.id ? 'selected' : ''}" onclick="selBarber='${b.id}'; renderBarberGrid(); goToStep(3);">
+          <strong>${b.name}</strong>
+        </div>
+      `).join('');
     }
 
-    // Guardar cita en Firebase Cloud
+    function renderDateScroll() {
+      document.getElementById('dateScroll').innerHTML = dates.map(d => `
+        <div class="card ${selDate === d ? 'selected' : ''}" onclick="selDate='${d}'; renderDateScroll();">
+          <strong>${d}</strong>
+        </div>
+      `).join('');
+    }
+
+    function renderSlotGrid() {
+      document.getElementById('slotGrid').innerHTML = slots.map(s => `
+        <div class="card ${selSlot === s ? 'selected' : ''}" onclick="selSlot='${s}'; renderSlotGrid(); goToStep(4);">
+          <strong>${s}</strong>
+        </div>
+      `).join('');
+    }
+
+    function renderPaymentGrid() {
+      document.getElementById('paymentGrid').innerHTML = payments.map(p => `
+        <div class="card ${selPayment === p ? 'selected' : ''}" onclick="selPayment='${p}'; renderPaymentGrid(); goToStep(5);">
+          <strong>${p}</strong>
+        </div>
+      `).join('');
+    }
+
+    function validateField(id, val) {}
+
+    function renderServicePreview() {}
+
     function confirmBooking() {
-      const name = document.getElementById('clientName').value.trim();
-      const phone = document.getElementById('clientPhone').value.trim();
+      const name = document.getElementById('nameInput').value;
+      const phone = document.getElementById('phoneInput').value;
+      const ref = document.getElementById('referenceInput').value;
 
-      if (!selectedService) {
-        showToast("Por favor selecciona un servicio.");
-        return;
-      }
       if (!name || !phone) {
-        showToast("Por favor ingresa tu nombre y teléfono.");
+        showToast("Por favor completa tu nombre y teléfono.");
         return;
       }
 
-      const serviceObj = services.find(s => s.id === selectedService);
-
-      const bookingData = {
+      const newBooking = {
         name: name,
         phone: phone,
-        service: serviceObj.name,
-        price: serviceObj.price,
+        reference: ref,
+        service: selService ? services.find(s=>s.id===selService).name : 'Corte',
+        barber: selBarber ? barbers.find(b=>b.id===selBarber).name : 'JR',
+        date: selDate || 'Hoy',
+        slot: selSlot || '10:00 AM',
+        payment: selPayment || 'Pago Móvil',
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
       };
 
-      // GUARDAR EN FIRESTORE
-      db.collection("bookings").add(bookingData)
-        .then(() => {
-          showToast("¡Cita reservada con éxito!");
-          document.getElementById('clientName').value = '';
-          document.getElementById('clientPhone').value = '';
-          selectedService = null;
-          renderServices();
-        })
-        .catch((error) => {
-          console.error("Error al guardar cita: ", error);
-          showToast("Error al conectar con la base de datos.");
-        });
+      db.collection("bookings").add(newBooking).then(() => {
+        showToast("¡Cita reservada con éxito!");
+        goToStep(1);
+      }).catch(err => {
+        showToast("Error al guardar cita.");
+      });
     }
 
-    // Escuchar cambios en la base de datos en TIEMPO REAL
-    function listenAppointments() {
-      db.collection("bookings").orderBy("createdAt", "desc")
-        .onSnapshot((snapshot) => {
-          const listContainer = document.getElementById('appointmentsList');
-          if (snapshot.empty) {
-            listContainer.innerHTML = '<p>No hay citas reservadas aún.</p>';
-            return;
-          }
-
-          let html = '';
-          snapshot.forEach((doc) => {
-            const data = doc.data();
-            html += `
-              <div class="appointment-item">
-                <div>
-                  <strong>${data.name} - ${data.service} (${data.price})</strong>
-                  <small>Teléfono: ${data.phone}</small>
-                </div>
-                <button class="btn-delete" onclick="deleteBooking('${doc.id}')">Cancelar</button>
-              </div>
-            `;
-          });
-          listContainer.innerHTML = html;
-        }, (error) => {
-          console.error("Error al obtener citas: ", error);
-          document.getElementById('appointmentsList').innerHTML = '<p>Error al cargar el historial.</p>';
+    function renderAppointmentsTable() {
+      db.collection("bookings").orderBy("createdAt", "desc").onSnapshot(snapshot => {
+        let html = '';
+        notifications = [];
+        snapshot.forEach(doc => {
+          const b = doc.data();
+          html += `
+            <div class="summary-card">
+              <div class="summary-row"><span class="k">Cliente:</span><span class="v">${b.name}</span></div>
+              <div class="summary-row"><span class="k">Servicio:</span><span class="v">${b.service}</span></div>
+              <div class="summary-row"><span class="k">Barbero:</span><span class="v">${b.barber}</span></div>
+              <div class="summary-row"><span class="k">Fecha/Hora:</span><span class="v">${b.date} - ${b.slot}</span></div>
+              <div class="summary-row"><span class="k">Acción:</span><button class="btn-delete" onclick="deleteBooking('${doc.id}')">Cancelar</button></div>
+            </div>
+          `;
+          notifications.push({ to: "0412-685.5494", sentAt: b.date || "Hoy" });
         });
+        document.getElementById('appointmentsTable').innerHTML = html || '<p>No hay citas agendadas.</p>';
+        renderNotifications();
+      });
     }
 
-    // Borrar cita
     function deleteBooking(id) {
-      db.collection("bookings").doc(id).delete()
-        .then(() => showToast("Cita cancelada."))
-        .catch(err => showToast("Error al eliminar."));
+      db.collection("bookings").doc(id).delete().then(() => showToast("Cita cancelada."));
     }
 
+    function renderNotifications() {
+      const wrap = document.getElementById('notifyListWrap');
+      if (notifications.length === 0) {
+        wrap.innerHTML = '<p class="empty-hint">Todavía no se generaron notificaciones.</p>';
+        return;
+      }
+      let html = '';
+      notifications.forEach(n => {
+        html += `
+          <div class="summary-card" style="margin-bottom:0.7rem; max-width:640px;">
+            <div class="summary-row"><span class="k">Para</span><span class="v">${n.to}</span></div>
+            <div class="summary-row"><span class="k">Mensaje</span><span class="v" style="text-align:left;">Nueva cita agendada</span></div>
+          </div>
+        `;
+      });
+      wrap.innerHTML = html;
+    }
+
+    var toastTimer = null;
     function showToast(msg) {
-      const toast = document.getElementById("toast");
-      toast.textContent = msg;
-      toast.className = "show";
-      setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
+      var el = document.getElementById("toast");
+      el.textContent = msg;
+      el.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(function(){ el.classList.remove('show'); }, 3200);
     }
 
-    // Cargar al iniciar
-    window.onload = function() {
-      renderServices();
-      listenAppointments();
-    };
+    /* ===================================================
+       INIT
+    =================================================== */
+    function initDataSync() {
+      renderServiceGrid();
+      renderBarberGrid();
+      renderDateScroll();
+      renderSlotGrid();
+      renderPaymentGrid();
+      renderAppointmentsTable();
+      goToStep(1);
+    }
+
+    window.onload = initDataSync;
   </script>
 </body>
 </html>
