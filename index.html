@@ -101,7 +101,7 @@
       color: white;
     }
 
-    /* Grillas */
+    /* Grillas y tarjetas */
     .grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
@@ -119,6 +119,57 @@
     .card.selected {
       border: 2px solid var(--gold);
       background: #fffdf7;
+    }
+
+    /* Formularios y entradas */
+    .form-group {
+      margin-top: 15px;
+    }
+    .form-group label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    .form-group input {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      box-sizing: border-box;
+    }
+
+    /* Tabla de citas */
+    .appointments-list {
+      margin-top: 15px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .appointment-item {
+      background: white;
+      border: 1px solid var(--border);
+      padding: 12px;
+      border-radius: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .appointment-item strong {
+      display: block;
+      color: #111;
+    }
+    .appointment-item small {
+      color: #666;
+    }
+    .btn-delete {
+      background: #ff4d4d;
+      color: white;
+      border: none;
+      padding: 6px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.8rem;
     }
 
     /* Toast */
@@ -157,19 +208,24 @@
 
   <div class="subtitle">RESERVA GUIADA</div>
   <h1>Agendá tu turno</h1>
-  <p>Completá los cinco pasos para confirmar tu cita.</p>
+  <p>Completá los datos para confirmar tu cita.</p>
 
-  <div class="steps-container">
-    <div class="step-item active" id="step1-tab"><div class="step-num">1</div><br>Servicio</div>
-    <div class="step-item" id="step2-tab"><div class="step-num">2</div><br>Profesional</div>
-    <div class="step-item" id="step3-tab"><div class="step-num">3</div><br>Fecha</div>
-    <div class="step-item" id="step4-tab"><div class="step-num">4</div><br>Pago</div>
-    <div class="step-item" id="step5-tab"><div class="step-num">5</div><br>Confirmar</div>
+  <!-- Selección de Servicio -->
+  <h3>1. Elige un servicio</h3>
+  <div id="serviceGrid" class="grid"></div>
+
+  <!-- Datos del Cliente -->
+  <h3 style="margin-top:25px;">2. Tus Datos</h3>
+  <div class="form-group">
+    <label for="clientName">Nombre completo</label>
+    <input type="text" id="clientName" placeholder="Ej: Juan Pérez">
+  </div>
+  <div class="form-group">
+    <label for="clientPhone">Teléfono</label>
+    <input type="tel" id="clientPhone" placeholder="Ej: 04121234567">
   </div>
 
-  <!-- Contenedores de opciones -->
-  <div id="serviceGrid" class="grid"></div>
-  <div id="barberGrid" class="grid" style="display:none;"></div>
+  <button class="btn-action" style="margin-top: 20px; width: 100%; padding: 12px;" onclick="confirmBooking()">Confirmar Cita</button>
 
   <div id="toast">Notificación</div>
 
@@ -178,11 +234,10 @@
   <div class="subtitle">HISTORIAL SINCRONIZADO</div>
   <h2>Mis citas reservadas</h2>
   <p>Las reservas están sincronizadas en la nube y son visibles desde cualquier dispositivo en tiempo real.</p>
-  <div id="appointmentsTable"></div>
-
-  <div class="subtitle" style="margin-top:20px;">NOTIFICACIONES</div>
-  <h2>Notificaciones enviadas al barbero</h2>
-  <p>Aviso simulado hacia el número 0412-685.5494 cada vez que se confirma una cita.</p>
+  
+  <div id="appointmentsList" class="appointments-list">
+    <p>Cargando citas guardadas...</p>
+  </div>
 
   <!-- Cargar SDKs de Firebase (v10 COMPAT) -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
@@ -200,26 +255,19 @@
       measurementId: "G-G6CX1KK0CG"
     };
 
-    // Inicializar Firebase
+    // Inicializar Firebase y la Base de Datos
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    // 2. Datos locales
     const services = [
       { id: 'corte', name: 'Corte Tradicional', price: '$10' },
       { id: 'barba', name: 'Arreglo de Barba', price: '$5' },
       { id: 'combo', name: 'Corte + Barba', price: '$13' }
     ];
 
-    const barbers = [
-      { id: 'jr', name: 'Barbero JR' },
-      { id: 'alex', name: 'Alex' }
-    ];
-
     let selectedService = null;
-    let selectedBarber = null;
 
-    // 3. Funciones de Renderizado
+    // Renderizar servicios
     function renderServices() {
       const grid = document.getElementById('serviceGrid');
       grid.innerHTML = services.map(s => `
@@ -233,7 +281,82 @@
     function selectService(id) {
       selectedService = id;
       renderServices();
-      showToast("Servicio seleccionado");
+    }
+
+    // Guardar cita en Firebase Cloud
+    function confirmBooking() {
+      const name = document.getElementById('clientName').value.trim();
+      const phone = document.getElementById('clientPhone').value.trim();
+
+      if (!selectedService) {
+        showToast("Por favor selecciona un servicio.");
+        return;
+      }
+      if (!name || !phone) {
+        showToast("Por favor ingresa tu nombre y teléfono.");
+        return;
+      }
+
+      const serviceObj = services.find(s => s.id === selectedService);
+
+      const bookingData = {
+        name: name,
+        phone: phone,
+        service: serviceObj.name,
+        price: serviceObj.price,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      };
+
+      // GUARDAR EN FIRESTORE
+      db.collection("bookings").add(bookingData)
+        .then(() => {
+          showToast("¡Cita reservada con éxito!");
+          document.getElementById('clientName').value = '';
+          document.getElementById('clientPhone').value = '';
+          selectedService = null;
+          renderServices();
+        })
+        .catch((error) => {
+          console.error("Error al guardar cita: ", error);
+          showToast("Error al conectar con la base de datos.");
+        });
+    }
+
+    // Escuchar cambios en la base de datos en TIEMPO REAL
+    function listenAppointments() {
+      db.collection("bookings").orderBy("createdAt", "desc")
+        .onSnapshot((snapshot) => {
+          const listContainer = document.getElementById('appointmentsList');
+          if (snapshot.empty) {
+            listContainer.innerHTML = '<p>No hay citas reservadas aún.</p>';
+            return;
+          }
+
+          let html = '';
+          snapshot.forEach((doc) => {
+            const data = doc.data();
+            html += `
+              <div class="appointment-item">
+                <div>
+                  <strong>${data.name} - ${data.service} (${data.price})</strong>
+                  <small>Teléfono: ${data.phone}</small>
+                </div>
+                <button class="btn-delete" onclick="deleteBooking('${doc.id}')">Cancelar</button>
+              </div>
+            `;
+          });
+          listContainer.innerHTML = html;
+        }, (error) => {
+          console.error("Error al obtener citas: ", error);
+          document.getElementById('appointmentsList').innerHTML = '<p>Error al cargar el historial.</p>';
+        });
+    }
+
+    // Borrar cita
+    function deleteBooking(id) {
+      db.collection("bookings").doc(id).delete()
+        .then(() => showToast("Cita cancelada."))
+        .catch(err => showToast("Error al eliminar."));
     }
 
     function showToast(msg) {
@@ -243,9 +366,10 @@
       setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
     }
 
-    // Inicializar la vista
+    // Cargar al iniciar
     window.onload = function() {
       renderServices();
+      listenAppointments();
     };
   </script>
 </body>
